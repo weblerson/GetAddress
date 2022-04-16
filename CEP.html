@@ -135,7 +135,7 @@
           },
 
           error: function(){
-            if(document.getElementById("cep").value.length < 8){
+            if(document.getElementById("cep").value.length < 8 || document.getElementById("cep").value.length > 8){
               let error = `
               <div class="alert alert-danger" role="alert">
                 Digite um CEP válido de 8 dígitos!
