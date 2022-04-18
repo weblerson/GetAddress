@@ -11,9 +11,9 @@
   </head>
   <body>
       <header>
-        <nav class="navbar navbar-expand-lg navbar-light bg-light">
+        <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
           <div class="container-fluid">
-            <a class="navbar-brand" href="#">GetAddress</a>
+            <div class="navbar-brand">GetAddress</div>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
               <span class="navbar-toggler-icon"></span>
             </button>
@@ -37,14 +37,144 @@
         </nav>
       </header>
 
-      <main>
+      <main><br>
+        <section class = "container">
+          <div class = "row">
+            <div class = "col-md">
+              <select id = "estados" onclick = "showCities()" class="form-select">
+                <option selected value = "XXX">Selecione o Estado</option>
+              </select>
+            </div>
+            
+            <div class = "col-md">
+              <select id = "cidades" class = "form-select">
+                <option selected>Selecione a cidade</option>
+              </select>
+            </div>
+          </div><br>
 
+          <div class = "row">
+            <div class = "col-lg">
+              <form>
+                <div class = "form-group">
+                  <label for = "location">Digite o bairro ou rua:</label>
+                  <input type = "text" class = "form-control" id = "location" placeholder = "Ex.: Armando Mendes">
+                </div>
+              </form>
+            </div>
+          </div><br>
+
+          <div class = "row">
+            <div class = "col">
+              <button onclick = "search()" class = "btn btn-primary">Buscar</button>
+            </div>
+          </div><br>
+
+          <div id = "alert-container" class = "container">
+            <!--Alert-->
+
+          </div>
+
+          <div id = "address-data" class = container>
+            <!--Data-->
+
+          </div><br><br>
+        </section>
       </main>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-ka7Sk0Gln4gmtz2MlQnikT1wXgYsOg+OMhuP+IlRH9sENBO0LRn5q+8nbTov4+1p" crossorigin="anonymous"></script>
     
     <script>
+      fetch("States.json")
+        .then(states => states.json())
+        .then(states => {
+          states.UF.forEach(state => {
+          let data = `
+            <option value="${state.sigla}">${state.nome}</option>
+          `;
+          
+          document.getElementById("estados").innerHTML += data;
+        })
+      })
 
+      async function showCities(){
+        let state = document.getElementById("estados").value;
+        document.getElementById("cidades").innerHTML = "<option selected>Selecione a cidade</option>";
+
+        if(state !== "XXX"){
+          await fetch("Cities.json")
+            .then(cities => cities.json())
+            .then(cities => {
+              cities.estados.forEach(estado => {
+                if(estado.sigla === state){
+                  estado.cidades.forEach(cidade => {
+                    let data = `
+                      <option value="${cidade}">${cidade}</option>
+                    `;
+
+                    document.getElementById("cidades").innerHTML += data;
+                  })
+                }
+              })
+            })
+          }
+      }
+
+      function search(){
+        $.ajax({
+          url: `https://viacep.com.br/ws/${document.getElementById("estados").value}/
+            ${document.getElementById("cidades").value}/
+            ${document.getElementById("location").value}/json/`,
+          method: "get",
+          async: true,
+          success: function(response){
+            document.getElementById("address-data").innerHTML = "";
+            document.getElementById("alert-container").innerHTML = "";
+
+            if(response.length > 1){
+              let message = `
+                <div class = "alert alert-success">
+                  Endereços achados com sucesso!
+                </div>
+              `;
+
+              document.getElementById("alert-container").innerHTML = message;
+            } else {
+              let message = `
+                <div class = "alert alert-success">
+                  Endereço achado com sucesso!
+                </div>
+              `;
+
+              document.getElementById("alert-container").innerHTML = message;
+            }
+
+            response.forEach(address => {
+              let data = `
+                <div class = "row bg-light border rounded">
+                  <div class = "col-md">
+                    <p id = "cep">CEP: ${address.cep}</p>
+                    <p id = "logradouro">Logradouro: ${address.logradouro}</p>
+                    <p id = "complemento">Complemento: ${address.complemento}</p>
+                    <p id = "bairro">Bairro: ${address.bairro}</p>
+                    <p id = "localidade">Localidade: ${address.localidade}</p>
+                  </div>
+
+                  <div class = "col-md">
+                    <p id = "uf">UF: ${address.uf}</p>
+                    <p id = "ibge">IBGE: ${address.ibge}</p>
+                    <p id = "gia">Gia: ${address.gia}</p>
+                    <p id = "ddd">DDD: ${address.ddd}</p>
+                    <p id = "siafi">Siafi: ${address.siafi}</p>
+                  </div>
+                </div>
+                `;
+
+                document.getElementById("address-data").innerHTML += data;
+            });
+          }
+        });
+      }
     </script>
   </body>
 </html>
